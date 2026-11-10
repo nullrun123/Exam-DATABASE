@@ -64,7 +64,8 @@ INSERT INTO Transactions VALUES ('TR015','ACC05','เงินเดือนต
 INSERT INTO Transactions VALUES ('TR016','ACC05','ค่ายาและพบแพทย์',TO_DATE('02/11/2026','DD/MM/YYYY'),'11:00:00',750,'F','ตรวจสุขภาพประจำปี');
 INSERT INTO Transactions VALUES ('TR017','ACC05','ค่าแท็กซี่',TO_DATE('05/11/2026','DD/MM/YYYY'),'22:10:00',210,'F','เดินทางกลับบ้านหลังเลิกงานดึก');
 INSERT INTO Transactions VALUES ('TR018','ACC05','โบนัสพิเศษ',TO_DATE('07/11/2026','DD/MM/YYYY'),'15:00:00',5000,'T','โบนัสจากโครงการพิเศษ');
- 
+
+
 -------------------------------------------------------------
 -- 5. TAGLIST
 -- (TransactionID, LineNo, TagID) : LineNo นับใหม่ในแต่ละ Transaction
