@@ -23,6 +23,8 @@ END;
 -------------------------------------------------------------
 -- 2. CurrencyPlan: สร้าง / แก้ไขแผนการเงิน (งบประมาณ)
 -------------------------------------------------------------
+
+
 CREATE OR REPLACE PROCEDURE sp_create_plan (
     p_planid     IN VARCHAR2,
     p_accountid  IN VARCHAR2,
@@ -40,6 +42,9 @@ BEGIN
 END;
 /
  
+
+
+
 CREATE OR REPLACE PROCEDURE sp_update_plan (
     p_planid     IN VARCHAR2,
     p_planname   IN VARCHAR2,
@@ -149,6 +154,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('สร้างแท็กเรียบร้อย: ' || p_tagid);
 END;
 /
+
+
  
 CREATE OR REPLACE PROCEDURE sp_update_tag (
     p_tagid    IN VARCHAR2,
@@ -172,7 +179,6 @@ CREATE OR REPLACE PROCEDURE sp_delete_tag (
 ) AS
 BEGIN
     DELETE FROM TagList WHERE TagID = p_tagid;
- 
     DELETE FROM Tag WHERE TagID = p_tagid;
  
     IF SQL%ROWCOUNT = 0 THEN
@@ -226,6 +232,7 @@ BEGIN
 END;
 /
  
+
 CREATE OR REPLACE PROCEDURE sp_yearly_summary (
     p_accountid IN VARCHAR2,
     p_year      IN NUMBER
@@ -335,96 +342,7 @@ END;
 /
 
 
--------------------------------------------------------------
--- 3.1 ดึงรายการรายรับ / รายจ่าย ด้วย RevenueFlag
---     TRUE  = รายรับ (Income)
---     FALSE = รายจ่าย (Expense)
--- ดึงรายรับทั้งหมดของ A001
--- BEGIN
---     sp_get_transactions_by_flag('A001', TRUE);
--- END;
--- /
 
--- ========== รายการรายรับ ==========
--- รหัสรายการ : TR001
--- ชื่อรายการ : เงินเดือน
--- วันที่      : 01/11/2026
--- จำนวนเงิน  : 30,000.00
--- รายละเอียด : เงินเดือน พ.ย.
--- ------------------------------
--- จำนวนรายการทั้งหมด: 1
--------------------------------------------------------------
-
-CREATE OR REPLACE PROCEDURE sp_get_transactions_by_flag (
-    p_accountid     IN VARCHAR2,
-    p_revenue_flag  IN BOOLEAN
-) AS
-    v_count NUMBER := 0;
-BEGIN
-    -- ตรวจสอบว่ามีการส่งค่า TRUE/FALSE หรือไม่
-    IF p_revenue_flag IS NULL THEN
-        RAISE_APPLICATION_ERROR(
-            -20001,
-            'กรุณาระบุประเภท TRUE หรือ FALSE'
-        );
-    END IF;
-
-    -- แสดงหัวข้อ
-    IF p_revenue_flag THEN
-        DBMS_OUTPUT.PUT_LINE('========== รายการรายรับ ==========');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('========== รายการรายจ่าย ==========');
-    END IF;
-
-    -- ดึงรายการตาม RevenueFlag
-    FOR r IN (
-        SELECT TransactionID,
-               TransName,
-               TransDate,
-               TransTime,
-               Amount,
-               TransDescription
-        FROM Transactions
-        WHERE AccountID = p_accountid
-          AND RevenueFlag = p_revenue_flag
-        ORDER BY TransDate, TransTime
-    )
-    LOOP
-        v_count := v_count + 1;
-
-        DBMS_OUTPUT.PUT_LINE(
-            'รหัสรายการ : ' || r.TransactionID
-        );
-
-        DBMS_OUTPUT.PUT_LINE(
-            'ชื่อรายการ : ' || r.TransName
-        );
-
-        DBMS_OUTPUT.PUT_LINE(
-            'วันที่      : ' || TO_CHAR(r.TransDate, 'DD/MM/YYYY')
-        );
-
-        DBMS_OUTPUT.PUT_LINE(
-            'จำนวนเงิน  : ' || TO_CHAR(r.Amount, 'FM999,999,990.00')
-        );
-
-        DBMS_OUTPUT.PUT_LINE(
-            'รายละเอียด : ' || r.TransDescription
-        );
-
-        DBMS_OUTPUT.PUT_LINE('------------------------------');
-    END LOOP;
-
-    -- กรณีไม่พบข้อมูล
-    IF v_count = 0 THEN
-        DBMS_OUTPUT.PUT_LINE('ไม่พบรายการ');
-    END IF;
-
-    DBMS_OUTPUT.PUT_LINE('จำนวนรายการทั้งหมด: ' || v_count);
-
-END;
-/
- 
 
 
 COMMIT;
@@ -459,3 +377,98 @@ BEGIN
     COMMIT;
 END;
 /
+
+
+
+
+
+-------------------------------------------------------------
+-- 3.1 ดึงรายการรายรับ / รายจ่าย ด้วย RevenueFlag
+--     TRUE  = รายรับ (Income)
+--     FALSE = รายจ่าย (Expense)
+-- ดึงรายรับทั้งหมดของ A001
+-- BEGIN
+--     sp_get_transactions_by_flag('A001', TRUE);
+-- END;
+-- /
+
+-- ========== รายการรายรับ ==========
+-- รหัสรายการ : TR001
+-- ชื่อรายการ : เงินเดือน
+-- วันที่      : 01/11/2026
+-- จำนวนเงิน  : 30,000.00
+-- รายละเอียด : เงินเดือน พ.ย.
+-- ------------------------------
+-- จำนวนรายการทั้งหมด: 1
+-------------------------------------------------------------
+
+-- CREATE OR REPLACE PROCEDURE sp_get_transactions_by_flag (
+--     p_accountid     IN VARCHAR2,
+--     p_revenue_flag  IN BOOLEAN
+-- ) AS
+--     v_count NUMBER := 0;
+-- BEGIN
+--     -- ตรวจสอบว่ามีการส่งค่า TRUE/FALSE หรือไม่
+--     IF p_revenue_flag IS NULL THEN
+--         RAISE_APPLICATION_ERROR(
+--             -20001,
+--             'กรุณาระบุประเภท TRUE หรือ FALSE'
+--         );
+--     END IF;
+
+--     -- แสดงหัวข้อ
+--     IF p_revenue_flag THEN
+--         DBMS_OUTPUT.PUT_LINE('========== รายการรายรับ ==========');
+--     ELSE
+--         DBMS_OUTPUT.PUT_LINE('========== รายการรายจ่าย ==========');
+--     END IF;
+
+--     -- ดึงรายการตาม RevenueFlag
+--     FOR r IN (
+--         SELECT TransactionID,
+--                TransName,
+--                TransDate,
+--                TransTime,
+--                Amount,
+--                TransDescription
+--         FROM Transactions
+--         WHERE AccountID = p_accountid
+--           AND RevenueFlag = p_revenue_flag
+--         ORDER BY TransDate, TransTime
+--     )
+--     LOOP
+--         v_count := v_count + 1;
+
+--         DBMS_OUTPUT.PUT_LINE(
+--             'รหัสรายการ : ' || r.TransactionID
+--         );
+
+--         DBMS_OUTPUT.PUT_LINE(
+--             'ชื่อรายการ : ' || r.TransName
+--         );
+
+--         DBMS_OUTPUT.PUT_LINE(
+--             'วันที่      : ' || TO_CHAR(r.TransDate, 'DD/MM/YYYY')
+--         );
+
+--         DBMS_OUTPUT.PUT_LINE(
+--             'จำนวนเงิน  : ' || TO_CHAR(r.Amount, 'FM999,999,990.00')
+--         );
+
+--         DBMS_OUTPUT.PUT_LINE(
+--             'รายละเอียด : ' || r.TransDescription
+--         );
+
+--         DBMS_OUTPUT.PUT_LINE('------------------------------');
+--     END LOOP;
+
+--     -- กรณีไม่พบข้อมูล
+--     IF v_count = 0 THEN
+--         DBMS_OUTPUT.PUT_LINE('ไม่พบรายการ');
+--     END IF;
+
+--     DBMS_OUTPUT.PUT_LINE('จำนวนรายการทั้งหมด: ' || v_count);
+
+-- END;
+-- /
+ 
