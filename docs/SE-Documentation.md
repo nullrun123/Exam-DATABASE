@@ -226,7 +226,7 @@ CREATE TABLE Transactions (
     TransDate        DATE,
     TransTime        VARCHAR2(8),          -- รูปแบบ HH24:MI:SS
     Amount           NUMBER(12,2),
-    RevenueFlag      BOOLEAN NOT NULL,     -- TRUE = รายรับ, FALSE = รายจ่าย
+    RevenueFlag      NUMBER(1) NOT NULL,   -- 1 = รายรับ, 0 = รายจ่าย
     TransDescription VARCHAR2(255),
     CONSTRAINT FK_TransUser    FOREIGN KEY (AccountID)
         REFERENCES UserCurrencyData(AccountID),
@@ -244,10 +244,10 @@ CREATE TABLE Transactions (
 | `TransDate` | DATE | วันที่รายการ |
 | `TransTime` | VARCHAR2(8) | เวลา รูปแบบ `HH24:MI:SS` |
 | `Amount` | NUMBER(12,2) | จำนวนเงิน (> 0) |
-| `RevenueFlag` | BOOLEAN | `TRUE` = รายรับ, `FALSE` = รายจ่าย |
+| `RevenueFlag` | NUMBER(1) | `1` = รายรับ, `0` = รายจ่าย |
 | `TransDescription` | VARCHAR2(255) | หมายเหตุ |
 
-> ⚠️ **หมายเหตุ:** `BOOLEAN` type ต้องใช้ **Oracle 23ai** ขึ้นไป สำหรับ Oracle รุ่นเก่าให้ใช้ `NUMBER(1)` หรือ `CHAR(1)` แทน
+> 💡 **หมายเหตุ:** `RevenueFlag` ใช้ชนิดข้อมูล `NUMBER(1)` โดยกำหนดให้ `1 = รายรับ` และ `0 = รายจ่าย` เพื่อให้ทำงานได้บน Oracle ทุกเวอร์ชัน
 
 ### 6.6 ตาราง TagList (ตารางเชื่อม Transaction-Tag)
 
@@ -432,7 +432,7 @@ CREATE OR REPLACE PROCEDURE sp_add_transaction (
     p_transdate IN DATE,
     p_transtime IN VARCHAR2,   -- รูปแบบ HH24:MI:SS
     p_amount    IN NUMBER,
-    p_isrevenue IN BOOLEAN,    -- TRUE = รายรับ, FALSE = รายจ่าย
+    p_isrevenue IN NUMBER,     -- 1 = รายรับ, 0 = รายจ่าย
     p_desc      IN VARCHAR2
 ) AS
 BEGIN
@@ -441,7 +441,7 @@ BEGIN
     VALUES (p_transid, p_accountid, p_transname, p_transdate,
             p_transtime, p_amount, p_isrevenue, p_desc);
 
-    IF p_isrevenue THEN
+    IF p_isrevenue = 1 THEN
         DBMS_OUTPUT.PUT_LINE('บันทึกรายรับเรียบร้อย: ' || p_transid);
     ELSE
         DBMS_OUTPUT.PUT_LINE('บันทึกรายจ่ายเรียบร้อย: ' || p_transid);
@@ -455,7 +455,7 @@ END;
 BEGIN
     sp_add_transaction('TR020', 'ACC01', N'เงินเดือน',
                        DATE '2026-11-25', '09:00:00',
-                       25000, TRUE, 'เงินเดือน พ.ย.');
+                       25000, 1, 'เงินเดือน พ.ย.');
     COMMIT;
 END;
 /
@@ -470,7 +470,7 @@ CREATE OR REPLACE PROCEDURE sp_update_transaction (
     p_transdate IN DATE,
     p_transtime IN VARCHAR2,
     p_amount    IN NUMBER,
-    p_isrevenue IN BOOLEAN,
+    p_isrevenue IN NUMBER,     -- 1 = รายรับ, 0 = รายจ่าย
     p_desc      IN VARCHAR2
 ) AS
 BEGIN
@@ -595,8 +595,8 @@ CREATE OR REPLACE PROCEDURE sp_monthly_summary (
     v_income  NUMBER(14,2);
     v_expense NUMBER(14,2);
 BEGIN
-    SELECT NVL(SUM(CASE WHEN RevenueFlag = TRUE  THEN Amount END), 0),
-           NVL(SUM(CASE WHEN RevenueFlag = FALSE THEN Amount END), 0)
+    SELECT NVL(SUM(CASE WHEN RevenueFlag = 1 THEN Amount END), 0),
+           NVL(SUM(CASE WHEN RevenueFlag = 0 THEN Amount END), 0)
       INTO v_income, v_expense
       FROM Transactions
      WHERE AccountID = p_accountid
@@ -639,8 +639,8 @@ BEGIN
 
     FOR r IN (
         SELECT EXTRACT(MONTH FROM TransDate) AS m,
-               NVL(SUM(CASE WHEN RevenueFlag = TRUE  THEN Amount END), 0) AS income,
-               NVL(SUM(CASE WHEN RevenueFlag = FALSE THEN Amount END), 0) AS expense
+               NVL(SUM(CASE WHEN RevenueFlag = 1 THEN Amount END), 0) AS income,
+               NVL(SUM(CASE WHEN RevenueFlag = 0 THEN Amount END), 0) AS expense
           FROM Transactions
          WHERE AccountID = p_accountid
            AND EXTRACT(YEAR FROM TransDate) = p_year
@@ -678,13 +678,13 @@ CREATE OR REPLACE PROCEDURE sp_compare_months (
 BEGIN
     SELECT NVL(SUM(Amount), 0) INTO v_exp1
       FROM Transactions
-     WHERE AccountID = p_accountid AND RevenueFlag = FALSE
+     WHERE AccountID = p_accountid AND RevenueFlag = 0
        AND EXTRACT(YEAR  FROM TransDate) = p_year1
        AND EXTRACT(MONTH FROM TransDate) = p_month1;
 
     SELECT NVL(SUM(Amount), 0) INTO v_exp2
       FROM Transactions
-     WHERE AccountID = p_accountid AND RevenueFlag = FALSE
+     WHERE AccountID = p_accountid AND RevenueFlag = 0
        AND EXTRACT(YEAR  FROM TransDate) = p_year2
        AND EXTRACT(MONTH FROM TransDate) = p_month2;
 
@@ -728,7 +728,7 @@ BEGIN
       INTO v_spent
       FROM Transactions
      WHERE AccountID = v_account
-       AND RevenueFlag = FALSE
+       AND RevenueFlag = 0
        AND TRUNC(TransDate, 'MM') = TRUNC(v_date, 'MM');
 
     DBMS_OUTPUT.PUT_LINE('แผน ' || p_planid
@@ -776,10 +776,10 @@ END;
 CREATE OR REPLACE VIEW V_UserCurrencySummary AS
 SELECT u.AccountID,
        -- เงินที่ใช้ได้ = รายรับทั้งหมด - รายจ่ายทั้งหมด
-       NVL(SUM(CASE WHEN t.RevenueFlag = TRUE  THEN  t.Amount
-                    WHEN t.RevenueFlag = FALSE THEN -t.Amount END), 0) AS UseableMoney,
+       NVL(SUM(CASE WHEN t.RevenueFlag = 1 THEN  t.Amount
+                    WHEN t.RevenueFlag = 0 THEN -t.Amount END), 0) AS UseableMoney,
        -- รายจ่ายรายปี (ปีปัจจุบัน)
-       NVL(SUM(CASE WHEN t.RevenueFlag = FALSE
+       NVL(SUM(CASE WHEN t.RevenueFlag = 0
                      AND EXTRACT(YEAR FROM t.TransDate) = EXTRACT(YEAR FROM SYSDATE)
                     THEN t.Amount END), 0) AS OutcomeYearly
 FROM UserCurrencyData u
@@ -893,11 +893,11 @@ END;
 -- ทดสอบเพิ่มรายการและติดแท็ก
 BEGIN
     sp_add_transaction('TR001', 'A001', N'เงินเดือน',
-                       DATE '2026-11-01', '09:00:00', 30000, TRUE, 'เงินเดือน พ.ย.');
+                       DATE '2026-11-01', '09:00:00', 30000, 1, 'เงินเดือน พ.ย.');
     sp_add_transaction('TR002', 'A001', N'ข้าวกลางวัน',
-                       DATE '2026-11-02', '12:30:00', 120, FALSE, 'ร้านข้าวแกง');
+                       DATE '2026-11-02', '12:30:00', 120, 0, 'ร้านข้าวแกง');
     sp_add_transaction('TR003', 'A001', N'ค่ากาแฟ',
-                       DATE '2026-11-05', '08:15:00', 450, FALSE, 'ร้านกาแฟ');
+                       DATE '2026-11-05', '08:15:00', 450, 0, 'ร้านกาแฟ');
     sp_tag_transaction('TR002', 'T001');
     sp_tag_transaction('TR003', 'T001');
     COMMIT;
@@ -916,7 +916,7 @@ END;
 -- ทดสอบแก้ไขและลบ
 BEGIN
     sp_update_transaction('TR002', N'ข้าวกลางวัน', DATE '2026-11-02', '12:30:00',
-                          150, FALSE, 'ร้านข้าวแกง (ราคาอัปเดต)');
+                          150, 0, 'ร้านข้าวแกง (ราคาอัปเดต)');
     sp_delete_transaction('TR003');
     sp_monthly_summary('A001', 2026, 11);  -- ดูผลหลังแก้ไข
     COMMIT;

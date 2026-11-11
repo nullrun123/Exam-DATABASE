@@ -209,11 +209,11 @@ END;
 -- เพิ่มรายการทดสอบ
 BEGIN
     sp_add_transaction('TX001', 'TEST01', N'เงินเดือนทดสอบ',
-                       DATE '2026-11-01', '09:00:00', 20000, TRUE, 'เงินเดือน');
+                       DATE '2026-11-01', '09:00:00', 20000, 1, 'เงินเดือน');
     sp_add_transaction('TX002', 'TEST01', N'ค่าข้าว',
-                       DATE '2026-11-02', '12:00:00', 150, FALSE, 'ข้าวแกง');
+                       DATE '2026-11-02', '12:00:00', 150, 0, 'ข้าวแกง');
     sp_add_transaction('TX003', 'TEST01', N'ค่ากาแฟ',
-                       DATE '2026-11-03', '08:00:00', 80, FALSE, 'กาแฟเย็น');
+                       DATE '2026-11-03', '08:00:00', 80, 0, 'กาแฟเย็น');
     sp_tag_transaction('TX002', 'TX01');
     sp_tag_transaction('TX003', 'TX01');
     COMMIT;
@@ -230,7 +230,7 @@ END;
 -- ทดสอบแก้ไขและลบ
 BEGIN
     sp_update_transaction('TX002', N'ค่าข้าวอัปเดต',
-                          DATE '2026-11-02', '12:00:00', 180, FALSE, 'ข้าวแกง + น้ำ');
+                          DATE '2026-11-02', '12:00:00', 180, 0, 'ข้าวแกง + น้ำ');
     sp_delete_transaction('TX003');
     COMMIT;
 END;
@@ -288,13 +288,13 @@ SELECT * FROM V_UserCurrencySummary ORDER BY AccountID;
 -- ดูรายการรายรับ
 SELECT TransactionID, AccountID, TransName, TransDate, Amount
 FROM Transactions
-WHERE RevenueFlag = TRUE
+WHERE RevenueFlag = 1
 ORDER BY TransDate;
 
 -- ดูรายการรายจ่าย
 SELECT TransactionID, AccountID, TransName, TransDate, Amount
 FROM Transactions
-WHERE RevenueFlag = FALSE
+WHERE RevenueFlag = 0
 ORDER BY TransDate;
 ```
 

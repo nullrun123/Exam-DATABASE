@@ -287,7 +287,7 @@ CREATE TABLE Item (
 
 ## 5. DML — ข้อมูลตัวอย่าง
 
-### 5.1 Category (5 หมวดหมู่)
+### 5.1 Category (6 หมวดหมู่)
 
 ```sql
 INSERT INTO Category VALUES ('CT01','อาหารสด');
@@ -295,6 +295,7 @@ INSERT INTO Category VALUES ('CT02','อาหารแห้ง');
 INSERT INTO Category VALUES ('CT03','เครื่องดื่ม');
 INSERT INTO Category VALUES ('CT04','ขนมหวาน');
 INSERT INTO Category VALUES ('CT05','อาหารแช่แข็ง');
+INSERT INTO Category VALUES ('CT06','อาหารปรุงสำเร็จ');
 ```
 
 ### 5.2 WMS (3 ระบบ)

@@ -13,16 +13,18 @@ END;
 /
 PURGE RECYCLEBIN;
  
-
-/ PURGE RECYCLEBIN;
-
 -- create table
 
--- 1. แผนการเงิน
+-- 1.ข้อมูลการเงินของผู้ใช้
+CREATE TABLE UserCurrencyData (
+    AccountID   VARCHAR2(10) PRIMARY KEY
+);
+
+-- 2. แผนการเงิน
 CREATE TABLE CurrencyPlan (
     PlanID          VARCHAR2(10) PRIMARY KEY,
     AccountID       VARCHAR2(10),
-    PlanName        NVARCHAR2(100),
+    PlanName        NVARCHAR2(255),
     PlanDescription NVARCHAR2(255),
     PlanDate        DATE,
     Amount          NUMBER(12,2),
@@ -31,20 +33,17 @@ CREATE TABLE CurrencyPlan (
     CONSTRAINT FK_PlanUser FOREIGN KEY (AccountID)
         REFERENCES UserCurrencyData(AccountID)
 );
--- 2.ข้อมูลการเงินของผู้ใช้
-CREATE TABLE UserCurrencyData (
-    AccountID   VARCHAR2(10) PRIMARY KEY
-);
+
 
 -- 3.TRANSACTIONS  
 CREATE TABLE Transactions (
     TransactionID   VARCHAR2(10) PRIMARY KEY,
     AccountID       VARCHAR2(10),
-    TransName       VARCHAR2(100),
+    TransName       VARCHAR2(255),
     TransDate       DATE,
     TransTime       VARCHAR2(8),          -- รูปแบบ HH24:MI:SS
     Amount          NUMBER(12,2),
-    RevenueFlag     BOOLEAN NOT NULL,              -- T = รายรับ, F = รายจ่าย
+    RevenueFlag     NUMBER(1) NOT NULL,              -- T = รายรับ, F = รายจ่าย
     TransDescription VARCHAR2(255),
     CONSTRAINT FK_TransUser FOREIGN KEY (AccountID)
         REFERENCES UserCurrencyData(AccountID)
@@ -72,11 +71,8 @@ CREATE TABLE TagList (
 -----------------------------
 -- เพิ่ม Business Constraints
 -----------------------------
--- 1. CategoryRevenue & CategoryExpenses
-ALTER TABLE CategoryRevenue MODIFY (CatRevName VARCHAR2 (100) NOT NULL)
-ALTER TABLE CategoryExpenses MODIFY (CatExpName VARCHAR2 (100) NOT NULL);
 
--- 2) CURRENCYPLAN
+-- 1) CURRENCYPLAN
 ----------------------------
 -- ชื่อแผนต้องไม่เป็นค่าว่าง
 ALTER TABLE CurrencyPlan MODIFY (PlanName NVARCHAR2(100) NOT NULL);
@@ -87,23 +83,17 @@ ALTER TABLE CurrencyPlan
   CHECK (Amount > 0)
   ENABLE VALIDATE;
  
--- วันที่แก้ไขต้องไม่ก่อนวันที่สร้าง (ยังไม่เคยแก้ไขให้เป็น NULL ได้)
+-- วันที่แก้ไขต้องไม่ก่อนวันที่สร้าง 
 ALTER TABLE CurrencyPlan
   ADD CONSTRAINT CK_Plan_DateEdit
   CHECK (DateEdit IS NULL OR DateEdit >= DateCreate)
   ENABLE VALIDATE;
  
--- วันที่แก้ไขต้องไม่ก่อนวันที่สร้าง
-ALTER TABLE CurrencyPlan ADD CONSTRAINT CK_Plan_DateEdit CHECK (
-    DateEdit IS NULL
-    OR DateEdit >= DateCreate
-) ENABLE VALIDATE;
-
 
 -- 3) TRANSACTIONS
 
 -- ชื่อรายการต้องไม่เป็นค่าว่าง
-ALTER TABLE Transactions MODIFY (TransName NVARCHAR2(100) NOT NULL);
+ALTER TABLE Transactions MODIFY (TransName NVARCHAR2(255) NOT NULL);
 
 -- จำนวนเงินต้องมากกว่า 0
 ALTER TABLE Transactions
@@ -144,24 +134,7 @@ ALTER TABLE TagList
 
 
 
--------------------------------------------------------------
--- Derived Attributes: Useable Money / Outcome Yearly
--- (Relationship "currency management Function Called")
--- คำนวณจาก Transactions ผ่าน View แทนการเก็บเป็นคอลัมน์
--------------------------------------------------------------
-CREATE OR REPLACE VIEW V_UserCurrencySummary AS
-SELECT u.AccountID,
-       -- เงินที่ใช้ได้ = รายรับทั้งหมด - รายจ่ายทั้งหมด
-       NVL(SUM(CASE WHEN t.RevenueFlag = TRUE THEN t.Amount
-                    WHEN t.RevenueFlag = FALSE THEN -t.Amount END), 0) AS UseableMoney,
-       -- รายจ่ายรายปี (ปีปัจจุบัน)
-       NVL(SUM(CASE WHEN t.RevenueFlag = FALSE
-                     AND EXTRACT(YEAR FROM t.TransDate) = EXTRACT(YEAR FROM SYSDATE)
-                    THEN t.Amount END), 0) AS OutcomeYearly
-FROM UserCurrencyData u
-LEFT JOIN Transactions t ON t.AccountID = u.AccountID
-GROUP BY u.AccountID;
- 
+
 COMMIT;
 
 

@@ -13,7 +13,7 @@ ALTER SESSION SET NLS_DATE_FORMAT = 'DD/MM/YYYY';
 -- 1. CATEGORY
 CREATE TABLE Category (
     CatagoryID VARCHAR2(10) PRIMARY KEY,
-    CatagoryName VARCHAR2(100)
+    CatagoryName VARCHAR2(255)
 );
 
 -- 2. WMS (ระบบ WMS)
@@ -38,7 +38,7 @@ CREATE TABLE WareHouse (
 -- 4. DEPARTMENT
 CREATE TABLE Department (
     DepartmentID VARCHAR2(10) PRIMARY KEY,
-    DepartmentName VARCHAR2(100),
+    DepartmentName VARCHAR2(255),
     MgrEmployeeID VARCHAR2(10),
     MgrDate DATE,
     CONSTRAINT UQ_Department_Mgr UNIQUE (MgrEmployeeID)
@@ -47,8 +47,8 @@ CREATE TABLE Department (
 -- 5.EMPLOYEE
 CREATE TABLE Employee (
     EmployeeId      VARCHAR2(10) PRIMARY KEY,
-    FirstName       VARCHAR2(50),
-    LastName        VARCHAR2(50),
+    FirstName       VARCHAR2(255),
+    LastName        VARCHAR2(255),
     WorkStatus      VARCHAR2(20),
     Salary          NUMBER(10,2),
     StartDate       DATE,
@@ -67,6 +67,7 @@ CREATE TABLE Employee (
 -- 6.Item
 CREATE TABLE Item (
     ItemID          VARCHAR2(10) PRIMARY KEY,
+    ItemName        VARCHAR2(255),
     Price           NUMBER(10, 2),
     ArrivalDate     DATE,
     CostPrice       NUMBER(10, 2),
@@ -85,7 +86,7 @@ CREATE TABLE Item (
 
 
 -----------------------------
--- เพิ่ม Business Constraints
+-- เพิ่ม Constraints
 -----------------------------
 
 -- 1. Category
@@ -101,10 +102,10 @@ ALTER TABLE WareHouse
     CHECK (Check_Approval IN ('Pending','Approved','Rejected'));
 
 -- 4. DEPARTMENT
-ALTER TABLE Department MODIFY (DepartmentName VARCHAR2(100) NOT NULL); --Modify val of the col
+ALTER TABLE Department MODIFY (DepartmentName VARCHAR2(255) NOT NULL); --Modify val of the col
 
 -- 5. EMPLOYEE
-ALTER TABLE Employee ADD (Check_EmpStatus VARCHAR2(100) NOT NULL); --Add new col into the table
+ALTER TABLE Employee ADD (Check_EmpStatus VARCHAR2(255) NOT NULL); --Add new col into the table
 ALTER TABLE Employee
     ADD CONSTRAINT CK_Employee_Status
     CHECK (Check_EmpStatus IN ('Arrival', 'Not_Arrival'));
@@ -116,7 +117,7 @@ ALTER TABLE Employee
 
 ALTER TABLE Employee
     ADD CONSTRAINT CK_Employee_ResignDate
-    CHECK (RegisterDate IS NULL OR RegisterDate >= StartDate)
+    CHECK (ResignDate IS NULL OR ResignDate >= StartDate)
     ENABLE VALIDATE;
 
 ALTER TABLE Employee
@@ -143,17 +144,6 @@ ALTER TABLE Item
     CHECK (Price > 0 AND CostPrice > 0 AND SalePrice > 0)
     ENABLE VALIDATE;
 
-
--------------------------------------------------------------
--- Derived Attribute: Department.Total_Employee (คำนวณจาก Employee)
--------------------------------------------------------------
-CREATE OR REPLACE VIEW V_Department_Total AS
-SELECT d.DepartmentID,
-       d.DepartmentName,
-       COUNT(e.EmployeeID) AS Total_Employee
-FROM   Department d
-LEFT JOIN Employee e ON e.DepartmentID = d.DepartmentID
-GROUP BY d.DepartmentID, d.DepartmentName;
 
 
 

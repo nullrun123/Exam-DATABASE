@@ -1,3 +1,6 @@
+
+
+--  เพิ่มหมวดหมู่
 CREATE OR REPLACE PROCEDURE sp_add_category (
     p_catid     IN VARCHAR2,
     p_catname   IN VARCHAR2
@@ -8,6 +11,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('เพิ่มหมวดหมู่สินค้าเรียบร้อย: ' || p_catid);
 END;
 /
+
+--  ลงทะเบียนระบบ WMS
 CREATE OR REPLACE PROCEDURE sp_register_wms (
     p_address    IN VARCHAR2,
     p_regdate    IN DATE
@@ -18,6 +23,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('ลงทะเบียนระบบ WMS เรียบร้อย: ' || p_address);
 END;
 /
+
+-- เพิ่มคลังสินค้า
 CREATE OR REPLACE PROCEDURE sp_create_warehouse (
     p_whid          IN VARCHAR2,
     p_address       IN VARCHAR2,
@@ -31,6 +38,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('เพิ่มคลังสินค้าใหม่เรียบร้อย: ' || p_whid);
 END;
 /
+
+-- เพิ่มแผนก
 CREATE OR REPLACE PROCEDURE sp_create_department (
     p_depid       IN VARCHAR2,
     p_depname     IN VARCHAR2,
@@ -43,6 +52,10 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('เพิ่มแผนกใหม่เรียบร้อย: ' || p_depid);
 END;
 /
+
+
+-- เพิ่มพนักงาน
+
 CREATE OR REPLACE PROCEDURE sp_add_employee (
     p_empid         IN VARCHAR2,
     p_firstname     IN VARCHAR2,
@@ -64,6 +77,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('เพิ่มพนักงานใหม่เรียบร้อย: ' || p_empid);
 END;
 /
+
+-- เพิ่มสินค้า
 CREATE OR REPLACE PROCEDURE sp_add_item (
     p_itemid       IN VARCHAR2,
     p_price        IN NUMBER,
@@ -83,6 +98,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('เพิ่มสินค้าใหม่เรียบร้อย: ' || p_itemid);
 END;
 /
+
+-- ปรับจำนวนสินค้า
 CREATE OR REPLACE PROCEDURE sp_update_item_stock (
     p_itemid IN VARCHAR2,
     p_amount IN NUMBER
@@ -94,6 +111,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('ปรับจำนวนสินค้าเรียบร้อย: ' || p_itemid);
 END;
 /
+
+-- อนุมัติ/ปฏิเสธคลัง
 CREATE OR REPLACE PROCEDURE sp_approve_warehouse (
     p_whid      IN VARCHAR2,
     p_approval  IN VARCHAR2
@@ -106,6 +125,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('อัปเดตผลการตรวจคลังสินค้าเรียบร้อย: ' || p_whid);
 END;
 /
+
+-- อัปเดตสถานะพนักงาน
 CREATE OR REPLACE PROCEDURE sp_update_employee_status (
     p_empid     IN VARCHAR2,
     p_empstatus IN VARCHAR2
@@ -117,6 +138,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('อัปเดตสถานะการเข้างานเรียบร้อย: ' || p_empid);
 END;
 /
+
+-- บันทึกการลาออก
 CREATE OR REPLACE PROCEDURE sp_resign_employee (
     p_empid       IN VARCHAR2,
     p_resigndate  IN DATE
@@ -129,6 +152,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('บันทึกการลาออกของพนักงานเรียบร้อย: ' || p_empid);
 END;
 /
+
+-- แต่งตั้งหัวหน้าแผนก
 CREATE OR REPLACE PROCEDURE sp_assign_department_manager (
     p_depid       IN VARCHAR2,
     p_mgr_empid   IN VARCHAR2
